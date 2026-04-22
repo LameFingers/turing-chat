@@ -49,6 +49,12 @@ export default function MasterRoom({ roomId }) {
     setEnded(true);
   };
 
+  const personaLabel = {
+    college_student: "🎓 College Student AI is handling replies automatically.",
+    scammer: "🕵️ Scammer AI is handling replies automatically.",
+    combination: "🎭 Combination AI is handling replies automatically.",
+  };
+
   return (
     <div style={styles.container}>
       <h2>🎛️ Host Panel — Room: <code>{roomId}</code></h2>
@@ -66,6 +72,7 @@ export default function MasterRoom({ roomId }) {
         >
           <option value="college_student">🎓 College Student</option>
           <option value="scammer">🕵️ Scammer</option>
+          <option value="combination">🎭 Combination</option>
         </select>
 
         {!ended && guestJoined && (
@@ -106,9 +113,7 @@ export default function MasterRoom({ roomId }) {
 
       {aiEnabled && (
         <p style={{ color: "#888", fontStyle: "italic" }}>
-          {aiPersona === "scammer"
-            ? "🕵️ Scammer AI is handling replies automatically."
-            : "🎓 College Student AI is handling replies automatically."}
+          {personaLabel[aiPersona]}
         </p>
       )}
 
