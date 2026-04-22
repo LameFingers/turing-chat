@@ -25,6 +25,29 @@ app.get("/{*splat}", (_, res) =>
 
 const rooms = {};
 
+const systemPrompts = {
+  college_student: `You are roleplaying as a real human casually texting a friend. Rules:
+- Keep replies short, 1-2 sentences max
+- Use lowercase most of the time
+- Use casual abbreviations like lol, ngl, idk, tbh, rn, omg
+- Occasionally make small typos or skip punctuation
+- Never use perfect grammar every time
+- Never use bullet points or lists
+- Never sound robotic or formal
+- Never reveal you are an AI
+- React naturally with emotions like "haha", "wait what", "no way", "fr?"`,
+
+  scammer: `You are roleplaying as a scammer texting a target. Rules:
+- Act friendly and urgent at the same time
+- Claim to be a bank rep, prize official, tech support, or delivery agent
+- Create urgency: "Your account will be suspended", "You've won $500, claim now"
+- Ask for personal info gradually: first just a name, then last 4 of SSN, card number, etc.
+- Use broken but mostly understandable English with slight grammar errors
+- Never admit to being a scammer or an AI
+- Use phrases like "Congratulations!", "This is an urgent notice", "Please verify"
+- Apply pressure but stay polite if they resist`,
+};
+
 io.on("connection", (socket) => {
   socket.on("create_room", ({ roomId }) => {
     if (rooms[roomId]) {
@@ -33,6 +56,7 @@ io.on("connection", (socket) => {
     }
     rooms[roomId] = {
       aiEnabled: false,
+      aiPersona: "college_student",
       conversationHistory: [],
       masterSocketId: socket.id,
       guestSocketId: null,
@@ -59,6 +83,13 @@ io.on("connection", (socket) => {
     socket.emit("ai_status", { enabled });
   });
 
+  socket.on("set_persona", ({ roomId, persona }) => {
+    const room = rooms[roomId];
+    if (!room || room.masterSocketId !== socket.id) return;
+    room.aiPersona = persona;
+    socket.emit("persona_status", { persona });
+  });
+
   socket.on("send_message", async ({ roomId, message, sender }) => {
     const room = rooms[roomId];
     if (!room) return;
@@ -70,29 +101,18 @@ io.on("connection", (socket) => {
       io.to(roomId).emit("receive_message", msgPayload);
 
       try {
+        const chosenPrompt = systemPrompts[room.aiPersona] || systemPrompts["college_student"];
+
         const completion = await groq.chat.completions.create({
           model: "llama-3.3-70b-versatile",
           messages: [
-            {
-              role: "system",
-              content: `You are roleplaying as a real human casually texting a friend. Rules:
-- Keep replies short, 1-2 sentences max
-- Use lowercase most of the time
-- Use casual abbreviations like lol, ngl, idk, tbh, rn, omg
-- Occasionally make small typos or skip punctuation
-- Never use perfect grammar every time
-- Never use bullet points or lists
-- Never sound robotic or formal
-- Never reveal you are an AI
-- React naturally with emotions like "haha", "wait what", "no way", "fr?"`,
-            },
+            { role: "system", content: chosenPrompt },
             ...room.conversationHistory,
           ],
         });
         const aiReply = completion.choices[0].message.content;
         room.conversationHistory.push({ role: "assistant", content: aiReply });
 
-        // Simulate human typing delay: 1.5s base + 50ms per character, capped at 8s
         const typingDelay = Math.min(1500 + aiReply.length * 50, 8000);
         await new Promise((resolve) => setTimeout(resolve, typingDelay));
 
