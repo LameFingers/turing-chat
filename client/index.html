@@ -4,6 +4,30 @@
     <meta charset="UTF-8" />
     <title>Turing Chat</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html { height: 100%; }
+      body {
+        height: 100%;
+        font-family: 'Inter', sans-serif;
+        background: #0f0f13;
+        color: #e8e8f0;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root { height: 100%; }
+
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: transparent; }
+      ::-webkit-scrollbar-thumb { background: #2e2e3a; border-radius: 99px; }
+      ::-webkit-scrollbar-thumb:hover { background: #3e3e4e; }
+
+      ::selection { background: rgba(139, 92, 246, 0.3); }
+
+      * { transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
